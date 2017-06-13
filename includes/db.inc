@@ -34,10 +34,19 @@ function islandora_usage_stats_pid_id($pid) {
  * Gets the database id related to a PID.
  */
 function islandora_usage_stats_pid_to_db($pid) {
+  module_load_include('inc', 'islandora_usage_stats', 'includes/utilities');
   $object = islandora_object_load($pid);
-  return db_insert('islandora_usage_stats_objects')
-    ->fields(array('pid' => $pid, 'label' => $object->label))
-    ->execute();
+  $mainParent = islandora_usage_stats_find_all_level_parents($pid,0);
+  if(!is_null($mainParent)){
+    $mainParent = end($mainParent);
+    return db_insert('islandora_usage_stats_objects')
+      ->fields(array('pid' => $pid, 'label' => $object->label,'collection_id' => $mainParent['parent_id'],'collection_label' => $mainParent['parent_name']))
+      ->execute();
+  }else{
+    return db_insert('islandora_usage_stats_objects')
+      ->fields(array('pid' => $pid, 'label' => $object->label))
+      ->execute();
+  }
 }
 
 /**

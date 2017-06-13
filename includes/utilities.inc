@@ -28,13 +28,67 @@ function islandora_usage_stats_log_object_view(AbstractObject $object) {
         }
       }
       // Log parents.
+      
       $collections = islandora_basic_collection_get_parent_pids($object);
+      if ($object && array_intersect(array('islandora:sp_pdf', 'islandora:intermediateSerialCModelStub'),$object->models)){
+        $serialObject = $object->relationships->get(ISLANDORA_RELS_EXT_URI, ISLANDORA_SERIAL_OBJECT_PDF_PARENT_PREDICATE);
+        if(is_array($serialObject) && isset($serialObject) && !empty($serialObject)){
+          $parent_rels = reset($serialObject);
+          $collections[] = $parent_rels['object']['value'];
+        }else{
+          $collections = islandora_basic_collection_get_parent_pids($object);
+        }
+      }else{
+        $collections = islandora_basic_collection_get_parent_pids($object);
+      }
       foreach ($collections as $collection) {
         $collection_id = islandora_usage_stats_get_pid_id($collection);
         islandora_usage_stats_collection_view_to_db($object_access_id, $collection_id);
       }
       islandora_usage_stats_session_object_last_viewed_time($object->id, REQUEST_TIME);
     }
+  }
+}
+
+function islandora_usage_stats_find_all_level_parents($objectID,$level){
+  if(!isset($level)){
+    $level = 0;
+  }
+  $topParent = "cuhk:root";
+  $rootParent = "islandora:root";
+  module_load_include('inc', 'islandora_basic_collection', 'includes/utilities');
+  
+  $object = islandora_object_load($objectID);
+  $parents = NULL;
+  if ($object && array_intersect(array('islandora:sp_pdf', 'islandora:intermediateSerialCModelStub'),$object->models)){
+    $serialObject = $object->relationships->get(ISLANDORA_RELS_EXT_URI, ISLANDORA_SERIAL_OBJECT_PDF_PARENT_PREDICATE);
+    if(is_array($serialObject) && isset($serialObject) && !empty($serialObject)){
+      $parent_rels = reset($serialObject);
+      $parents[] = $parent_rels['object']['value'];
+    }else{
+      $parents = islandora_basic_collection_get_parent_pids($object);
+    }
+  }else if($object){
+    $parents = islandora_basic_collection_get_parent_pids($object);
+  }
+  if($parents){
+    foreach($parents as $parent){
+      if($parent !== $topParent && $parent !== $rootParent){
+          $parentArray[$level]['parent_id'] = $objectID;
+          $parentArray[$level]['parent_name'] = $object->label;
+          $parentArray = array_merge($parentArray,islandora_usage_stats_find_all_level_parents($parent,$level+1));
+      }else if($level === 0){
+        $parentObject = islandora_object_load($parent);
+        $parentArray[$level]['parent_id'] = $parentObject->id;
+        $parentArray[$level]['parent_name'] = $parentObject->label;
+      }else{
+        $parentArray[$level]['parent_id'] = $objectID;
+        $parentArray[$level]['parent_name'] = $object->label;
+      }
+    }
+  return $parentArray;
+  }else{
+    return NULL;
   }
 }
 

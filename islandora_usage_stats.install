@@ -182,6 +182,16 @@ function islandora_usage_stats_schema() {
         'length' => 64,
         'not NULL' => TRUE,
       ),
+      'collection_id' => array(
+        'description' => 'The collection id of the object.',
+        'type' => 'varchar',
+        'length' => 64,
+      ),
+      'collection_label' => array(
+        'description' => 'The collection label of the object.',
+        'type' => 'varchar',
+        'length' => 255,
+      ),
     ),
     'primary key' => array('id'),
     'unique keys' => array(
