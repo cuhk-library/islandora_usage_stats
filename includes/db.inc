@@ -32,6 +32,8 @@ function islandora_usage_stats_pid_id($pid) {
 
 /**
  * Gets the database id related to a PID.
+ *
+ * @throws Exception if the $pid cannot be loaded.
  */
 function islandora_usage_stats_pid_to_db($pid) {
   module_load_include('inc', 'islandora_usage_stats', 'includes/utilities');
@@ -39,13 +41,14 @@ function islandora_usage_stats_pid_to_db($pid) {
   $mainParent = islandora_usage_stats_find_all_level_parents($pid,0);
   if(!is_null($mainParent)){
     $mainParent = end($mainParent);
-    return db_insert('islandora_usage_stats_objects')
-      ->fields(array('pid' => $pid, 'label' => $object->label,'collection_id' => $mainParent['parent_id'],'collection_label' => $mainParent['parent_name']))
-      ->execute();
-  }else{
-    return db_insert('islandora_usage_stats_objects')
-      ->fields(array('pid' => $pid, 'label' => $object->label))
-      ->execute();
+    if ($object) {
+        return db_insert('islandora_usage_stats_objects')
+          ->fields(array('pid' => $pid, 'label' => $object->label,'collection_id' => $mainParent['parent_id'],'collection_label' => $mainParent['parent_name']))
+          ->execute();
+    }
+  }
+  else {
+    throw new Exception("Could not load '{$pid}' as Islandora object");
   }
 }
 
@@ -342,7 +345,7 @@ function islandora_usage_stats_object_view_to_db($pid_id, $request_time = NULL, 
  * Write a content model view to the DB.
  */
 function islandora_usage_stats_content_model_view_to_db($object_access_id, $model_id) {
-  db_insert('islandora_usage_stats_content_model_access_log')->fields(array(
+  return db_insert('islandora_usage_stats_content_model_access_log')->fields(array(
     'object_access_id' => $object_access_id,
     'content_model' => $model_id,
   ))->execute();
@@ -352,7 +355,7 @@ function islandora_usage_stats_content_model_view_to_db($object_access_id, $mode
  * Write a collection view to the DB.
  */
 function islandora_usage_stats_collection_view_to_db($object_access_id, $collection_id) {
-  db_insert('islandora_usage_stats_collection_access_log')->fields(array(
+  return db_insert('islandora_usage_stats_collection_access_log')->fields(array(
     'object_access_id' => $object_access_id,
     'collection' => $collection_id,
   ))->execute();
@@ -377,7 +380,7 @@ function islandora_usage_stats_collection_view_to_db($object_access_id, $collect
  */
 function islandora_usage_stats_datastream_download_to_db($ds_id, $request_time = NULL, $ip_address = NULL, $uid = NULL) {
   global $user;
-  db_insert('islandora_usage_stats_object_ds_access_log')->fields(array(
+  return db_insert('islandora_usage_stats_object_ds_access_log')->fields(array(
     'ds_id' => $ds_id,
     'time' => ($request_time !== NULL) ? $request_time : REQUEST_TIME,
     'ip' => ($ip_address !== NULL) ? $ip_address : ip_address(),

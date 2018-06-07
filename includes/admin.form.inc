@@ -21,12 +21,20 @@ function islandora_usage_stats_admin_form() {
   $form['usage'] = array(
     '#type' => 'fieldset',
     '#title' => t('Omit IPs'),
-    '#description' => t('Add IP addresses that you want to omit from usage tracking'),
+    '#description' => t('Add IP addresses and <a target="_blank" href="@cidr-link">CIDR ranges</a> that you want to omit from usage tracking',
+      array(
+        '@cidr-link' => 'https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing',
+      )
+    ),
   );
 
   $form['usage']['islandora_usage_stats_ip_list'] = array(
     '#type' => 'textarea',
-    '#description' => t('Add IPs separated by spaces'),
+    '#description' => t('Add IPs or <a target="_blank" href="@cidr-link">CIDR ranges</a> separated by spaces',
+      array(
+        '@cidr-link' => 'https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing',
+      )
+    ),
     '#default_value' => variable_get('islandora_usage_stats_ip_list', 'localhost 127.0.0.1'),
   );
 
@@ -42,6 +50,14 @@ function islandora_usage_stats_admin_form() {
     '#title' => t('Exclude bots'),
     '#description' => t('Exclude common bots to avoid artifical view count inflation.'),
     '#default_value' => variable_get('islandora_usage_stats_exclude_bots', '1'),
+  );
+
+  $form['usage']['islandora_usage_stats_exclude_bots_regex'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Bot Exclusion Regex'),
+    '#description' => t('The regular expression used to filter out bots'),
+    '#default_value' => variable_get('islandora_usage_stats_exclude_bots_regex', '/bot|rambler|spider|crawl|slurp|curl|^$/i'),
+    '#maxlength' => 256,
   );
 
   $form['clear'] = array(
@@ -178,6 +194,7 @@ function islandora_usage_stats_admin_form_submit($form, &$form_state) {
       variable_set('islandora_usage_stats_ip_list', $form_state['values']['islandora_usage_stats_ip_list']);
       variable_set('islandora_usage_stats_cooldown_seconds', $form_state['values']['islandora_usage_stats_cooldown_seconds']);
       variable_set('islandora_usage_stats_exclude_bots', $form_state['values']['islandora_usage_stats_exclude_bots']);
+      variable_set('islandora_usage_stats_exclude_bots_regex', $form_state['values']['islandora_usage_stats_exclude_bots_regex']);
       drupal_set_message(
         t("The configuration options have been saved.")
       );

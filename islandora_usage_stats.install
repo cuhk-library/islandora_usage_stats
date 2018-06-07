@@ -13,6 +13,7 @@ function islandora_usage_stats_uninstall() {
     'islandora_usage_stats_ip_list',
     'islandora_usage_stats_cooldown_seconds',
     'islandora_usage_stats_exclude_bots',
+    'islandora_usage_stats_exclude_bots_regex',
     'islandora_usage_stats_top_downloads_block_display_rows',
     'islandora_usage_stats_top_search_block_display_rows',
   );
@@ -77,7 +78,8 @@ function islandora_usage_stats_schema() {
     ),
     'indexes' => array(
       // 767 is maximum index size in worst case.
-      'term_index' => array(array('term', 767)),
+      // But if UTF8 is used then it is 3x. so 255
+      'term_index' => array(array('term', 255)),
     ),
     'primary key' => array('id'),
   );
@@ -675,7 +677,8 @@ function islandora_usage_stats_update_7005() {
     array(
       'indexes' => array(
         // 767 is maximum index size in worst case.
-        'term_index' => array(array('term', 767)),
+        // But if UTF8 is used it is 3x. So 255
+        'term_index' => array(array('term', 255)),
       ),
     )
   );
